@@ -949,14 +949,22 @@ seahorse_ssh_operation_generate (SeahorseSSHSource *src, const gchar *email,
     filename = seahorse_ssh_source_file_for_algorithm (src, type);
     g_return_val_if_fail (filename, NULL);
     
-    comment = escape_shell_arg (email);
-    
     algo = get_algorithm_text (type);
     g_return_val_if_fail (algo != NULL, NULL);
     
     /* Default number of bits */
-    if (bits == 0)
-        bits = 2048;
+    if (bits == 0 && type == SSH_ALGO_RSA)
+        bits = DEFAULT_RSA_SIZE;
+    if (bits == 0 && type == SSH_ALGO_DSA)
+        bits = DSA_SIZE;
+    
+    if ((type == SSH_ALGO_DSA &&  bits != DSA_SIZE) ||
+        (type == SSH_ALGO_RSA && (bits < MIN_RSA_SIZE || bits > _OPENSSH_MAX_RSA_SIZE))) {
+        g_warning ("can't generate ssh-%s key: invalid key size %u", algo, bits);
+        return NULL;
+    }
+    
+    comment = escape_shell_arg (email);
     
     cmd = g_strdup_printf (SSH_KEYGEN_PATH " -b '%d' -t '%s' -C %s -f '%s'",
                            bits, algo, comment, filename);

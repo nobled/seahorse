@@ -35,6 +35,15 @@
 #include "seahorse-ssh-source.h"
 #include "seahorse-ssh-key.h"
 
+/* limits for generating new keys */
+#define DSA_SIZE                1024
+
+#define MIN_RSA_SIZE             768
+#define DEFAULT_RSA_SIZE        2048
+#define MAX_RSA_SIZE            8192
+/* what OpenSSH technically accepts */
+#define _OPENSSH_MAX_RSA_SIZE  32768
+
 #define SEAHORSE_TYPE_SSH_OPERATION            (seahorse_ssh_operation_get_type ())
 #define SEAHORSE_SSH_OPERATION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), SEAHORSE_TYPE_SSH_OPERATION, SeahorseSSHOperation))
 #define SEAHORSE_SSH_OPERATION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), SEAHORSE_TYPE_SSH_OPERATION, SeahorseSSHOperationClass))

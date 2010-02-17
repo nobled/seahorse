@@ -78,9 +78,6 @@ seahorse_ssh_generate_register (void)
  * DIALOGS
  */
 
-#define DSA_SIZE 1024
-#define DEFAULT_RSA_SIZE 2048
-
 static void
 completion_handler (SeahorseOperation *op, gpointer data)
 {
@@ -127,9 +124,14 @@ on_change (GtkComboBox *combo, SeahorseWidget *swidget)
     
     t = gtk_combo_box_get_active_text (combo);
     if (t && strstr (t, "DSA")) {
+        /* Do not allow the user to choose any key size besides DSA/1024 */
         gtk_spin_button_set_value (GTK_SPIN_BUTTON (widget), DSA_SIZE);
         gtk_widget_set_sensitive (widget, FALSE);
     } else {
+        /* For RSA keys, let the user choose from a range of key sizes */
+        gtk_spin_button_set_range (GTK_SPIN_BUTTON (widget),
+                                   MIN_RSA_SIZE,
+                                   MAX_RSA_SIZE);
         gtk_spin_button_set_value (GTK_SPIN_BUTTON (widget), DEFAULT_RSA_SIZE);
         gtk_widget_set_sensitive (widget, TRUE);
     }
@@ -179,9 +181,13 @@ on_response (GtkDialog *dialog, guint response, SeahorseWidget *swidget)
     widget = seahorse_widget_get_widget (swidget, "bits-entry");
     g_return_if_fail (widget != NULL);
     bits = gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (widget));
-    if (bits < 512 || bits > 8192) {
-        g_message ("invalid key size: %s defaulting to 2048", t);
-        bits = 2048;
+    if (type == SSH_ALGO_RSA && (bits < MIN_RSA_SIZE || bits > MAX_RSA_SIZE)) {
+        bits = DEFAULT_RSA_SIZE;
+        g_message ("invalid key size: %s defaulting to %u", t, bits);
+    }
+    else if (type == SSH_ALGO_DSA && bits != DSA_SIZE) {
+        bits = DSA_SIZE;
+        g_message ("invalid key size: %s defaulting to %u", t, bits);
     }
     
     src = SEAHORSE_SSH_SOURCE (g_object_get_data (G_OBJECT (swidget), "source"));
